@@ -1,0 +1,179 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bouncing Ball Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1E3C72, #2A5298);
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            color: white;
+        }
+        canvas {
+            display: block;
+        }
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            animation: bounce 1s infinite alternate;
+            cursor: pointer;
+        }
+        .timer {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        @keyframes bounce {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -55%) scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="timer" id="timer">Time: 0s</div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 20,
+            dx: 5.5,
+            dy: 5.5,
+            color: "white"
+        };
+
+        let paddle = {
+            x: canvas.width / 2,
+            y: canvas.height - 50,
+            width: 150,
+            height: 10,
+            color: "white",
+            jiggle: 0
+        };
+
+        let gameOver = false;
+        let startTime = Date.now();
+
+        document.addEventListener("mousemove", (event) => {
+            paddle.x = event.clientX - paddle.width / 2;
+        });
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = ball.color;
+            ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawPaddle() {
+            ctx.fillStyle = paddle.color;
+            ctx.beginPath();
+            ctx.roundRect(paddle.x, paddle.y + Math.sin(paddle.jiggle) * 5, paddle.width, paddle.height, 5);
+            ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
+            ctx.shadowBlur = 10;
+            ctx.fill();
+        }
+
+        function updateBall() {
+            if (gameOver) return;
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
+                ball.dx *= -1;
+            }
+            if (ball.y - ball.radius < 0) {
+                ball.dy *= -1;
+            }
+
+            if (
+                ball.y + ball.radius > paddle.y &&
+                ball.x > paddle.x &&
+                ball.x < paddle.x + paddle.width
+            ) {
+                let hitPosition = (ball.x - paddle.x) / paddle.width - 0.5;
+                ball.dy = -Math.abs(ball.dy);
+                ball.dx += hitPosition * 8;
+                paddle.jiggle = Math.PI * 2;
+            }
+
+            if (ball.y + ball.radius > canvas.height) {
+                endGame();
+            }
+        }
+
+        function updatePaddle() {
+            if (paddle.jiggle > 0) {
+                paddle.jiggle *= 0.9;
+            }
+        }
+
+        function updateTimer() {
+            if (!gameOver) {
+                const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById("timer").innerText = `Time: ${elapsedTime}s`;
+            }
+        }
+
+        function endGame() {
+            gameOver = true;
+            const gameOverDiv = document.createElement("div");
+            gameOverDiv.className = "game-over";
+            gameOverDiv.innerHTML = "Game Over! <br> Click to Play Again";
+            document.body.appendChild(gameOverDiv);
+            gameOverDiv.addEventListener("click", resetGame);
+        }
+
+        function resetGame() {
+            document.querySelector(".game-over").remove();
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx = 5.5;
+            ball.dy = -5.5;
+            startTime = Date.now();
+            gameOver = false;
+            gameLoop();
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBall();
+            drawPaddle();
+            updateBall();
+            updatePaddle();
+            updateTimer();
+            if (!gameOver) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
