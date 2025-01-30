@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -81,6 +82,12 @@
             paddle.x = event.clientX - paddle.width / 2;
         });
 
+        document.addEventListener("touchmove", (event) => {
+            event.preventDefault();
+            let touch = event.touches[0];
+            paddle.x = touch.clientX - paddle.width / 2;
+        }, { passive: false });
+
         function drawBall() {
             ctx.beginPath();
             ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
@@ -145,7 +152,7 @@
             gameOver = true;
             const gameOverDiv = document.createElement("div");
             gameOverDiv.className = "game-over";
-            gameOverDiv.innerHTML = "Game Over! <br> Click to Play Again";
+            gameOverDiv.innerHTML = "Game Over! <br> Tap to Play Again";
             document.body.appendChild(gameOverDiv);
             gameOverDiv.addEventListener("click", resetGame);
         }
